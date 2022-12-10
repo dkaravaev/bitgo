@@ -1,15 +1,13 @@
 package main
 
 import (
-	"crypto/rand"
-	"fmt"
 	"os"
 	"testing"
 )
 
-var testFileName string = "data/debian-edu-11.5.0-amd64-netinst.iso.torrent"
+const TestFileName string = "data/debian-edu-11.5.0-amd64-netinst.iso.torrent"
 
-func readFile(fileName string, t *testing.T) *os.File {
+func ReadFile(fileName string, t *testing.T) *os.File {
 	file, err := os.Open(fileName)
 	if err != nil {
 		t.Errorf("File %s not found!\n", fileName)
@@ -19,7 +17,7 @@ func readFile(fileName string, t *testing.T) *os.File {
 }
 
 func TestParseTorrentFile(t *testing.T) {
-	bto, err := ParseTorrentFile(readFile(testFileName, t))
+	bto, err := ParseTorrentFile(ReadFile(TestFileName, t))
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -33,7 +31,7 @@ func TestParseTorrentFile(t *testing.T) {
 	piecesNum := (len(bs) / 20)
 	totalSize := piecesNum * bto.Info.PieceLength
 
-	totalSizeMB := int(float64(totalSize) * 1E-6)
+	totalSizeMB := int(float64(totalSize) * 1e-6)
 
 	if totalSizeMB != 464 {
 		t.Errorf("Wrong file size! Expected: 464 (MB), got: %d\n", totalSizeMB)
@@ -41,7 +39,7 @@ func TestParseTorrentFile(t *testing.T) {
 }
 
 func TestToTorrentFile(t *testing.T) {
-	bto, err := ParseTorrentFile(readFile(testFileName, t))
+	bto, err := ParseTorrentFile(ReadFile(TestFileName, t))
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -53,7 +51,7 @@ func TestToTorrentFile(t *testing.T) {
 }
 
 func TestBuildTrackerURL(t *testing.T) {
-	bto, err := ParseTorrentFile(readFile(testFileName, t))
+	bto, err := ParseTorrentFile(ReadFile(TestFileName, t))
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -63,13 +61,8 @@ func TestBuildTrackerURL(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	random := make([]byte, 20)
-	rand.Read(random)
-
-	var peerID [20]byte
-	copy(peerID[:], random)
-
-	url, _ := tf.buildTrackerURL(peerID, 10000)
-
-	fmt.Println(url)
+	_, err = tf.buildTrackerURL(MakeRandomPeerID(), 10000)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
 }

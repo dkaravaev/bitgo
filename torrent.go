@@ -31,15 +31,6 @@ type bencodeTorrent struct {
 	Info     bencodeInfo `bencode:"info"`
 }
 
-func ParseTorrentFile(r io.Reader) (*bencodeTorrent, error) {
-	bto := bencodeTorrent{}
-	err := bencode.Unmarshal(r, &bto)
-	if err != nil {
-		return nil, err
-	}
-	return &bto, nil
-}
-
 func (bto bencodeTorrent) computeInfoHash() [20]byte {
 	var buffer bytes.Buffer
 	bencode.Marshal(&buffer, bto.Info)
@@ -66,6 +57,15 @@ func (bto bencodeTorrent) toTorrentFile() (TorrentFile, error) {
 	ret.InfoHash = bto.computeInfoHash()
 
 	return ret, nil
+}
+
+func ParseTorrentFile(r io.Reader) (*bencodeTorrent, error) {
+	bto := bencodeTorrent{}
+	err := bencode.Unmarshal(r, &bto)
+	if err != nil {
+		return nil, err
+	}
+	return &bto, nil
 }
 
 func (t *TorrentFile) buildTrackerURL(peerID [20]byte, Port uint16) (string, error) {
