@@ -15,7 +15,7 @@ const Port uint16 = 20001
 
 type TrackerInfo struct {
 	Interval int
-	Peers    []Peer
+	Peers    []PeerInfo
 }
 
 type bencodeTrackerInfo struct {
@@ -41,7 +41,7 @@ func ParseTrackerResponse(resp *http.Response) (*bencodeTrackerInfo, error) {
 	return &bti, err
 }
 
-func ParsePeers(peersStr string) ([]Peer, error) {
+func ParsePeers(peersStr string) ([]PeerInfo, error) {
 	peersBin := []byte(peersStr)
 
 	const peerSize = 6
@@ -50,7 +50,7 @@ func ParsePeers(peersStr string) ([]Peer, error) {
 		return nil, fmt.Errorf("received malformed peers")
 	}
 
-	peers := make([]Peer, numPeers)
+	peers := make([]PeerInfo, numPeers)
 	for i := 0; i < numPeers; i++ {
 		offset := i * peerSize
 		peers[i].IP = net.IP(peersBin[offset : offset+4])
