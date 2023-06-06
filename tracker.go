@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/jackpal/bencode-go"
 )
@@ -64,10 +65,16 @@ func GetTrackerInfo(t *TorrentFile) (TrackerInfo, error) {
 	var ti TrackerInfo
 
 	urlString, _ := t.buildTrackerURL(MakeRandomPeerID(), Port)
-	resp, err := http.Get(urlString)
+
+	client := &http.Client{
+		Timeout: 3*time.Second,
+	}
+
+	resp, err := client.Get(urlString)
 	if err != nil {
 		return ti, err
 	}
+	defer resp.Body.Close()
 
 	bti, err := ParseTrackerResponse(resp)
 	if err != nil {
