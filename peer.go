@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/rand"
+	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"time"
@@ -35,10 +37,14 @@ func MakeRandomPeerID() PeerID {
 	return ret
 }
 
+func PeerHandshakeSize() int {
+	return 1 + len("BitTorrent protocol") + 8 + 20 + 20
+}
+
 // Serialize serializes the handshake to a buffer
 func (ph *PeerHandshake) Serialize() []byte {
-	size := 1 + len(ph.Pstr) + 8 + len(ph.InfoHash) + len(ph.PID)
-	buf := make([]byte, size)
+	ph.Pstr = "BitTorrent protocol"
+	buf := make([]byte, PeerHandshakeSize())
 
 	offset := 0
 	buf[offset] = byte(len(ph.Pstr))
@@ -49,6 +55,32 @@ func (ph *PeerHandshake) Serialize() []byte {
 	offset += copy(buf[offset:], ph.PID[:])
 
 	return buf
+}
+
+func ReadHandshake(r io.Reader) (*PeerHandshake, error) {
+	var ph PeerHandshake
+	buf := make([]byte, PeerHandshakeSize())
+
+	n, err := r.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	if n != PeerHandshakeSize() {
+		return nil, fmt.Errorf("invalid peer handshake size %d", n)
+	}
+
+	offset := 0
+
+	pLen := int(buf[offset])
+	offset += 1
+
+	ph.Pstr = string(buf[offset : offset+pLen])
+	offset += pLen
+
+	offset += copy(ph.InfoHash[:], buf[offset:offset+len(ph.InfoHash)])
+	offset += copy(ph.PID[:], buf[offset:offset+len(ph.PID)])
+
+	return &ph, nil
 }
 
 func (peer PeerInfo) String() string {
